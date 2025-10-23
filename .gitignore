@@ -1,9 +1,19 @@
-# File yang berisi variabel lingkungan rahasia
-.env
+# Strategi Allow-List ketat (hanya izinkan main.py & config.py)
+*
+!main.py
+!config.py
+!.gitignore
 
-# File sesi Telethon (RAHASIA)
+# Pastikan file-file ini tidak pernah terunggah
+# Tambahkan ini di bagian bawah untuk jaga-jaga (tidak akan berfungsi
+# jika sudah ada '*' di atas, tetapi aman untuk redundansi)
+.env
 *.session
+*.session-journal
+report_cache.json
+log_*.txt
 
 # Direktori/file lain yang tidak perlu di-commit
 __pycache__/
 venv/
+.idx/
