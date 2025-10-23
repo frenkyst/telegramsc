@@ -146,38 +146,42 @@ async def keyword_handler(event):
         # Untuk supergroup/channel, ID harus positif, tapi event.message.peer_id.channel_id
         # sudah memberikan ID channel yang benar (dengan tanda negatif jika perlu konversi)
         link = f"https://t.me/c/{abs(event.message.peer_id.channel_id)}/{event.message.id}"
-        link_text = f"[➡️ Lompat ke Pesan]({link})"
+        # MENGGUNAKAN HTML <a> TAG
+        link_text = f"<a href='{link}'>➡️ Lompat ke Pesan</a>"
     except AttributeError:
         link_text = "(Tautan pesan tidak tersedia)"
 
-    # Perbaikan: Untuk pengguna tanpa username, kita hanya menampilkan nama dan ID
-    # sebagai teks biasa, karena tg://user?id= sering tidak clickable dalam mode Markdown.
+    # Perbaikan: Mengubah format tautan ke HTML agar tautan tg://user?id= lebih mungkin clickable.
     if sender.username:
-        username_link = f"[@{sender.username}](https://t.me/{sender.username})"
+        # Tautan username biasa (menggunakan HTML <a> tag)
+        username_link = f"<a href='https://t.me/{sender.username}'>@{sender.username}</a>"
     else:
-        # Menghilangkan Markdown link untuk menghindari kegagalan render tg://user
-        username_link = f"**{sender.first_name}** (Tanpa Username, ID: `{sender.id}`)"
+        # Menggunakan tag <a> dengan protokol tg://user?id=
+        username_link = f"<a href='tg://user?id={sender.id}'>{sender.first_name} (Tanpa Username)</a>"
         
+    # Mengganti karakter '`' dengan '’' agar tidak merusak formatting HTML <pre>
     message_content = message_text.replace('`', '’')
     
-    report_message = f"""⚡️ **Laporan Kata Kunci** ⚡️
+    # MENGGUNAKAN HTML PARSE MODE UNTUK SELURUH LAPORAN
+    report_message = f"""<b>⚡️ Laporan Kata Kunci ⚡️</b>
 
-**🗝️ Ditemukan:** `{found_keyword}`
-**👥 Grup:** `{chat.title}`
+<b>🗝️ Ditemukan:</b> <code>{found_keyword}</code>
+<b>👥 Grup:</b> <code>{chat.title}</code>
 
---- **Info Pengirim** ---
-**🗣️ Nama:** `{sender.first_name}`
-**👤 Profil:** {username_link}
-**🆔 User ID:** `{sender.id}`
+--- <b>Info Pengirim</b> ---
+<b>🗣️ Nama:</b> <code>{sender.first_name}</code>
+<b>👤 Profil:</b> {username_link}
+<b>🆔 User ID:</b> <code>{sender.id}</code>
 
---- **Pesan Asli** ---
-```
+--- <b>Pesan Asli</b> ---
+<pre>
 {message_content}
-```
+</pre>
 {link_text}"""
 
     try:
-        await client.send_message(config.RECIPIENT_ID, report_message, parse_mode='md')
+        # PENTING: Mengubah parse_mode dari 'md' ke 'html'
+        await client.send_message(config.RECIPIENT_ID, report_message, parse_mode='html')
         
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         display_name = f"@{username_lower}" if username_lower else f"[{sender.first_name} ID:{sender.id}]"
@@ -207,28 +211,31 @@ async def whois_handler(event):
     """Memberikan informasi detail tentang username atau user ID."""
     target_input = event.pattern_match.group(1).strip()
     if not target_input:
-        await event.reply("ℹ️ **Guna:** `/whois <username/user_id>`")
+        # UBAH ke HTML
+        await event.reply("ℹ️ <b>Guna:</b> <code>/whois &lt;username/user_id&gt;</code>", parse_mode='html')
         return
 
     try:
         # Mencoba mendapatkan entitas berdasarkan input (username atau ID)
         entity = await client.get_entity(target_input)
     except Exception as e:
-        await event.reply(f"❌ **Error saat mengambil entitas:** {e}\nPastikan input berupa username (@user) atau ID numerik.")
+        # UBAH ke HTML
+        await event.reply(f"❌ <b>Error saat mengambil entitas:</b> {e}\nPastikan input berupa username (@user) atau ID numerik.", parse_mode='html')
         return
 
     entity_type = "User" if isinstance(entity, User) else "Grup/Channel"
     name = entity.first_name if isinstance(entity, User) and entity.first_name else entity.title
     username = f"@{entity.username}" if entity.username else "(tidak ada)"
 
-    user_info = f"""**🔎 Info Entitas**
+    # MENGGUNAKAN HTML PARSE MODE
+    user_info = f"""<b>🔎 Info Entitas</b>
 
-**Input:** `{target_input}`
-**Tipe:** `{entity_type}`
-**Nama:** `{name}`
-**Username:** `{username}`
-**ID Unik:** `{entity.id}`"""
-    await event.reply(user_info, parse_mode='md')
+<b>Input:</b> <code>{target_input}</code>
+<b>Tipe:</b> <code>{entity_type}</code>
+<b>Nama:</b> <code>{name}</code>
+<b>Username:</b> <code>{username}</code>
+<b>ID Unik:</b> <code>{entity.id}</code>"""
+    await event.reply(user_info, parse_mode='html')
 
 # =========================================================================
 # 5. FUNGSI UTAMA DAN STARTUP BOT

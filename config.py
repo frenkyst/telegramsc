@@ -67,8 +67,11 @@ KEYWORDS = [
     r'(?i)daftar',
     r'(?i)aplikasi',
     r'(?i)review',
-    r'(?i)fb',
-    r'(?i)foll',
+    # r'(?i)fb',
+    # r'(?i)foll',
+    # r'(?i)like',
+    # r'(?i)komen',
+    # r'(?i)tiktok',
 
     # --- Pola Angka & Simbol (dipisahkan agar lebih mudah dibaca) ---
     r'>\s*1k', r'>\s*1\.5k', r'>\s*2k', r'>\s*2\.5k',
