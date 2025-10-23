@@ -95,6 +95,7 @@ async def keyword_handler(event):
     if not sender or sender.bot:
         return
 
+    # User ID untuk pengecualian
     username_lower = sender.username.lower() if sender.username else None
     
     if username_lower and username_lower in config.EXCLUDED_USERNAMES:
@@ -106,6 +107,7 @@ async def keyword_handler(event):
         is_excluded_group = event.chat_id in config.EXCLUDED_KEYWORD_GROUPS
         is_excluded_keyword = keyword_pattern in config.EXCLUDED_KEYWORDS
         
+        # Logika Pengecualian Kata Kunci per Grup
         if is_excluded_group and is_excluded_keyword:
             continue
 
@@ -116,8 +118,10 @@ async def keyword_handler(event):
     if not found_keyword:
         return
 
+    # Penanda pengguna untuk Cooldown: gunakan username jika ada, jika tidak, gunakan ID
     user_identifier = username_lower if username_lower else str(sender.id)
     
+    # Logika Cooldown (diabaikan jika grup termasuk EXCLUDED_COOLDOWN_GROUPS)
     if event.chat_id not in config.EXCLUDED_COOLDOWN_GROUPS:
         current_time = time.time()
         last_reported_time = REPORT_CACHE.get(user_identifier)
@@ -137,13 +141,23 @@ async def keyword_handler(event):
             log_to_file(log_message)
             return
     
+    # Pembuatan Link Jump to Message
     try:
+        # Untuk supergroup/channel, ID harus positif, tapi event.message.peer_id.channel_id
+        # sudah memberikan ID channel yang benar (dengan tanda negatif jika perlu konversi)
         link = f"https://t.me/c/{abs(event.message.peer_id.channel_id)}/{event.message.id}"
         link_text = f"[➡️ Lompat ke Pesan]({link})"
     except AttributeError:
         link_text = "(Tautan pesan tidak tersedia)"
 
-    username_link = f"[@{sender.username}](https://t.me/{sender.username})" if sender.username else f"[{sender.first_name} (Tanpa Username)](tg://user?id={sender.id})"
+    # Perbaikan: Untuk pengguna tanpa username, kita hanya menampilkan nama dan ID
+    # sebagai teks biasa, karena tg://user?id= sering tidak clickable dalam mode Markdown.
+    if sender.username:
+        username_link = f"[@{sender.username}](https://t.me/{sender.username})"
+    else:
+        # Menghilangkan Markdown link untuk menghindari kegagalan render tg://user
+        username_link = f"**{sender.first_name}** (Tanpa Username, ID: `{sender.id}`)"
+        
     message_content = message_text.replace('`', '’')
     
     report_message = f"""⚡️ **Laporan Kata Kunci** ⚡️
@@ -169,13 +183,14 @@ async def keyword_handler(event):
         display_name = f"@{username_lower}" if username_lower else f"[{sender.first_name} ID:{sender.id}]"
         cleaned_text = message_text.strip().replace('"', '""')
 
-        # DEFINITIVE FIX for line 197
+        # Log sukses
         success_log = f"""[{timestamp}] ✅ [ID:{event.chat_id}] LAPORAN TERKIRIM: '{found_keyword}' dari {display_name} di '{chat.title}'.
     Pesan Asli: "{cleaned_text}"""
         
         print(f"[{timestamp}] ✅ Laporan terkirim: '{found_keyword}' dari {display_name}")
         log_to_file(success_log)
         
+        # Terapkan Cooldown
         if event.chat_id not in config.EXCLUDED_COOLDOWN_GROUPS:
             REPORT_CACHE[user_identifier] = time.time()
             save_cache()
@@ -196,13 +211,14 @@ async def whois_handler(event):
         return
 
     try:
+        # Mencoba mendapatkan entitas berdasarkan input (username atau ID)
         entity = await client.get_entity(target_input)
     except Exception as e:
-        await event.reply(f"❌ **Error saat mengambil entitas:** {e}")
+        await event.reply(f"❌ **Error saat mengambil entitas:** {e}\nPastikan input berupa username (@user) atau ID numerik.")
         return
 
     entity_type = "User" if isinstance(entity, User) else "Grup/Channel"
-    name = entity.first_name if isinstance(entity, User) else entity.title
+    name = entity.first_name if isinstance(entity, User) and entity.first_name else entity.title
     username = f"@{entity.username}" if entity.username else "(tidak ada)"
 
     user_info = f"""**🔎 Info Entitas**
