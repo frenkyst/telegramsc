@@ -1,0 +1,9 @@
+# File yang berisi variabel lingkungan rahasia
+.env
+
+# File sesi Telethon (RAHASIA)
+*.session
+
+# Direktori/file lain yang tidak perlu di-commit
+__pycache__/
+venv/
