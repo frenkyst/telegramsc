@@ -69,6 +69,8 @@ KEYWORDS = [
     r'(?i)playstore',
     r'(?i)registrasi',
     r'(?i)daftar',
+    r'(?i)aplikasi',
+    r'(?i)review',
 
     # --- Pola Angka & Simbol (dipisahkan agar lebih mudah dibaca) ---
     r'>\s*1k', r'>\s*1\.5k', r'>\s*2k', r'>\s*2\.5k',
