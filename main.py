@@ -20,7 +20,7 @@ import time
 import config
 
 # =========================================================================
-# 1. Inisialisasi Klien & Cache
+# 1. Inisialisasi Klien & Cache (Tambahan Konfigurasi Topik)
 # =========================================================================
 
 REPORT_CACHE = {}
@@ -28,6 +28,10 @@ CACHE_FILE = 'report_cache.json'
 
 session_name = 'userbot_session'
 client = TelegramClient(session_name, config.api_id, config.api_hash)
+
+# Mengambil konfigurasi Topic ID jika ada. Jika tidak, set ke None.
+# Anda perlu menambahkan REPORT_TOPIC_ID = 5345 (atau ID Topik Anda) di config.py
+REPORT_TOPIC_ID = getattr(config, 'REPORT_TOPIC_ID', None) 
 
 # =========================================================================
 # 2. Fungsi Helper & Persistensi Cache
@@ -180,8 +184,19 @@ async def keyword_handler(event):
 {link_text}"""
 
     try:
-        # PENTING: Mengubah parse_mode dari 'md' ke 'html'
-        await client.send_message(config.RECIPIENT_ID, report_message, parse_mode='html')
+        # Menyiapkan parameter pengiriman
+        send_params = {
+            'entity': config.RECIPIENT_ID,
+            'message': report_message,
+            'parse_mode': 'html'
+        }
+        
+        # Logika Tambahan untuk Mengirim ke Topik (jika REPORT_TOPIC_ID didefinisikan)
+        if REPORT_TOPIC_ID is not None:
+            # Topic ID (atau message thread ID) dilewatkan menggunakan parameter reply_to
+            send_params['reply_to'] = REPORT_TOPIC_ID
+            
+        await client.send_message(**send_params) # Mengirim pesan dengan parameter dinamis
         
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         display_name = f"@{username_lower}" if username_lower else f"[{sender.first_name} ID:{sender.id}]"
@@ -253,6 +268,11 @@ async def main():
     print(f"🗝️ {len(config.KEYWORDS)} kata kunci dipantau.")
     print(f"⏳ Cooldown: {config.COOLDOWN_SECONDS / 60:.0f} menit per pengguna.")
     print(f"💾 Cache Cooldown dimuat: {len(REPORT_CACHE)} entri aktif.")
+    
+    if REPORT_TOPIC_ID is not None:
+        print(f"📌 Laporan akan dikirim ke Topic ID: {REPORT_TOPIC_ID}")
+    else:
+        print("👤 Laporan akan dikirim ke Chat Pribadi (config.RECIPIENT_ID) tanpa Topik.")
     
     if config.EXCLUDED_KEYWORD_GROUPS and config.EXCLUDED_KEYWORDS:
         print(f"🚫 Kata kunci {config.EXCLUDED_KEYWORDS} dikecualikan di {len(config.EXCLUDED_KEYWORD_GROUPS)} grup.")

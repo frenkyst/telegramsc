@@ -22,6 +22,13 @@ api_id = int(os.environ.get('API_ID', 0))
 api_hash = os.environ.get('API_HASH', '').strip("'") # Hapus tanda kutip jika ada
 RECIPIENT_ID = int(os.environ.get('RECIPIENT_ID', 0))
 
+# ID Topik opsional. Hanya digunakan jika RECIPIENT_ID adalah ID Grup/Channel 
+# yang memiliki fitur topik. Jika dikosongkan/tidak ada di .env, nilainya None.
+# Nilai default adalah None.
+try:
+    REPORT_TOPIC_ID = int(os.environ.get('TOPIC_ID'))
+except (TypeError, ValueError):
+    REPORT_TOPIC_ID = None
 
 # =========================================================================
 # 2. Penargetan Grup & Kata Kunci
@@ -60,15 +67,15 @@ KEYWORDS = [
     r'(?i)anggersaputra',
     r'(?i)mentherg',
     r'(?i)regis',
-    r'(?i)live',         # Kata kunci yang bisa dikecualikan per grup
+    r'(?i)live',      # Kata kunci yang bisa dikecualikan per grup
     r'(?i)apk',
     r'(?i)playstore',
     r'(?i)registrasi',
     r'(?i)daftar',
     r'(?i)aplikasi',
     r'(?i)review',
-    # r'(?i)fb',
-    # r'(?i)foll',
+    r'(?i)fb',
+    r'(?i)foll',
     # r'(?i)like',
     # r'(?i)komen',
     # r'(?i)tiktok',
