@@ -105,6 +105,7 @@ EXCLUDED_KEYWORD_GROUPS = [
 EXCLUDED_KEYWORDS = [
     r'(?i)live',
     r'(?i)daftar',
+    r'(?i)review',
 ]
 
 # =========================================================================
